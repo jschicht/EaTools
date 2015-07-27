@@ -1,8 +1,9 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_UseUpx=y
 #AutoIt3Wrapper_Change2CUI=y
 #AutoIt3Wrapper_Res_Comment=Analyze extended attributes ($EA) on files on NTFS
 #AutoIt3Wrapper_Res_Description=Analyze extended attributes ($EA) on files on NTFS
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.0
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.1
 #AutoIt3Wrapper_Res_LegalCopyright=Joakim Schicht
 #AutoIt3Wrapper_Res_requestedExecutionLevel=asInvoker
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
@@ -21,7 +22,7 @@ Global Const $tagFILE_FULL_EA_INFORMATION1 = "ulong NextEntryOffset;byte Flags[1
 Global Const $tagIOSTATUSBLOCK = "ptr Status;ptr Information"
 Global $TargetPath, $Verbosity, $DoExtract, $TextIdentifier, $TargetIsDirectory, $SearchFilter, $RecursiveMode
 
-ConsoleWrite("EaQuery v1.0.0.0" & @CRLF & @CRLF)
+ConsoleWrite("EaQuery v1.0.0.1" & @CRLF & @CRLF)
 _ValidateInput()
 If $TargetIsDirectory Then
 	$TargetFile = _RecFileListToArray($TargetPath,$SearchFilter,0,$RecursiveMode)
@@ -100,7 +101,7 @@ Func _ProcessEa($TargetFile,$NameIdentifier,$ExtractionMode,$VerboseLevel)
 		$pPointer+=8
 		$sEaStruct = DllStructCreate("char EaName["&$EaNameLength&"]", $pPointer)
 		$EaName = DllStructGetData($sEaStruct, "EaName")
-		$pPointer+=$EaNameLength
+		$pPointer+=$EaNameLength+1
 		$sEaStruct = DllStructCreate("byte EaValue["&$EaValueLength&"]", $pPointer)
 		$EaValue = DllStructGetData($sEaStruct, "EaValue")
 		If StringInStr($EaName,$NameIdentifier) Or $NameIdentifier = "*" Then
@@ -112,7 +113,7 @@ Func _ProcessEa($TargetFile,$NameIdentifier,$ExtractionMode,$VerboseLevel)
 				ConsoleWrite("EaValueLength: " & $EaValueLength & @CRLF)
 				If $VerboseLevel = 2 Then
 					ConsoleWrite("EaValue:" & @CRLF)
-					ConsoleWrite(_HexEncode($EaValue) & @CRLF)
+					ConsoleWrite(_HexEncode(StringMid($EaValue,1,$EaValueLength*2)) & @CRLF)
 				EndIf
 				ConsoleWrite(@CRLF)
 			EndIf
@@ -125,18 +126,19 @@ Func _ProcessEa($TargetFile,$NameIdentifier,$ExtractionMode,$VerboseLevel)
 				EndIf
 				$tBuffer = DllStructCreate("byte[" & $EaValueLength & "]")
 				DllStructSetData($tBuffer,1,$EaValue)
-				$write = _WinAPI_WriteFile($hFile2, DllStructGetPtr($tBuffer), $EaValueLength, $nBytes)
+				$write = _WinAPI_WriteFile($hFile2, DllStructGetPtr($tBuffer), $EaValueLength-1, $nBytes)
 				If $write = 0 then
 					ConsoleWrite("Error WriteFile returned: " & _WinAPI_GetLastErrorMessage() & @CRLF)
 					Exit
 				Else
 					ConsoleWrite("Successfully wrote " & $nBytes & " bytes to " & @ScriptDir&"\EA_"&$EaName & @CRLF)
 				EndIf
+				ConsoleWrite(@CRLF)
 				$tBuffer=0
 				_WinAPI_CloseHandle($hFile2)
 			EndIf
 		EndIf
-		$pPointer+=$NextEntryOffset-8-$EaNameLength
+		$pPointer+=$NextEntryOffset-8-$EaNameLength-1
 	Until $NextEntryOffset=0
 	DllCall("ntdll.dll", "int", "NtClose", "hwnd", $hFile)
 EndFunc
@@ -283,8 +285,8 @@ Func _ValidateInput()
 		ConsoleWrite("Syntax is:" & @CRLF)
 		ConsoleWrite("EaQuery.exe /Target:TargetPath /Mode:{0|1} /Verbose:{0|1|2} /Identifier:{*|SomeText} /Filter:Text /Recurse:boolean" & @CRLF)
 		ConsoleWrite("	/Target can be file or directory" & @CRLF)
-		ConsoleWrite("	/Mode 1 is just displaying result on console. Mode 2 is also extracting the data." & @CRLF)
-		ConsoleWrite("	/Verbose level 0 show little information. Level 1 some more. Level 3 also dumps the data to console." & @CRLF)
+		ConsoleWrite("	/Mode 0 is just displaying result on console. Mode 1 is also extracting the data." & @CRLF)
+		ConsoleWrite("	/Verbose level 0 show only filenames containing $EA. Level 1 also show some $EA details. Level 2 also dumps the data to console." & @CRLF)
 		ConsoleWrite("	/Identifier is a filter for what EA names to parse. Default is '*'." & @CRLF)
 		ConsoleWrite("	/Filter is for included results. Multiple filters separatet by ';'. Default is '*'." & @CRLF)
 		ConsoleWrite("	/Recurse is a boolean value 0 or 1 for acivating/deactivating recursive mode. Default is off." & @CRLF)

@@ -23,21 +23,23 @@ As source code reveils, there are 2 ways of writing $EA:
 1. NtCreateFile and simpel as that.
 2. NtOpenFile and subsequent NtSetEaFile
 
-The FILE_FULL_EA_INFORMATION structure holds the relevant data.
+The FILE_FULL_EA_INFORMATION structure holds the relevant data. 
+
+The Flag member of FILE_FULL_EA_INFORMATION structure is configurable and can be zero or set with FILE_NEED_EA (0x80).
 
 
 Usage examples EaInject:
 
-Hiding a small file (10 kB) inside an existing file, and naming the EA "TEST":
+Hiding a small file (10 kB) inside an existing file, and naming the EA "TEST", and no FILE_NEED_EA flag set:
 EaInject.exe /Payload:C:\program.exe /Container:C:\tmp\file.txt /Mode:0 /Identifier:TEST
 
-Hiding a bigger file above 65 kB and spreading the output across existing files inside the directory "C:\temp", naming the EA "something" and searching in non-recursive mode:
-EaInject.exe /Payload:C:\bigfile.bin /Container:C:\temp /Mode:1 /Identifier:something /Filter:* /Recurse:0
+Hiding a bigger file above 65 kB and spreading the output across existing files inside the directory "C:\temp", naming the EA "something", searching in non-recursive mode, and setting FILE_NEED_EA flag:
+EaInject.exe /Payload:C:\bigfile.bin /Container:C:\temp /Mode:1 /Identifier:something /EaFlag:1 /Filter:* /Recurse:0
 
-Hiding a bigger file above 65 kB and spreading the out across existing txt files in the directory "C:\temp", naming the EA "testname", and searching in recursive mode:
-EaInject.exe /Payload:C:\bigfile.bin /Container:C:\temp /Mode:1 /Identifier:testname /Filter:*.txt /Recurse:1
+Hiding a bigger file above 65 kB and spreading the out across existing txt files in the directory "C:\temp", naming the EA "testname", and searching in recursive mode, and setting FILE_NEED_EA flag:
+EaInject.exe /Payload:C:\bigfile.bin /Container:C:\temp /Mode:1 /Identifier:testname /EaFlag:1 /Filter:*.txt /Recurse:1
 
-Hiding a bigger file above 65 kB and spreading the output into newly created files with random md5 names in the output directory C:\tmp, giving the EA name of "joke"
+Hiding a bigger file above 65 kB and spreading the output into newly created files with random md5 names in the output directory C:\tmp, giving the EA name of "joke, and no FILE_NEED_EA flag set"
 EaInject.exe /Payload:C:\bigfile.bin /Container:C:\tmp /Mode:2 /Identifier:joke
 
 

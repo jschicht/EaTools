@@ -1,9 +1,10 @@
 #RequireAdmin
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
+#AutoIt3Wrapper_UseUpx=y
 #AutoIt3Wrapper_Change2CUI=y
 #AutoIt3Wrapper_Res_Comment=Inject data into the $EA attribute
 #AutoIt3Wrapper_Res_Description=Inject data into the $EA attribute
-#AutoIt3Wrapper_Res_Fileversion=1.0.0.0
+#AutoIt3Wrapper_Res_Fileversion=1.0.0.1
 #AutoIt3Wrapper_Res_LegalCopyright=Joakim Schicht
 #AutoIt3Wrapper_Res_requestedExecutionLevel=asInvoker
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
@@ -13,16 +14,16 @@ Global Const $tagOBJECTATTRIBUTES = "ulong Length;handle RootDirectory;ptr Objec
 Global Const $tagUNICODESTRING = "ushort Length;ushort MaximumLength;ptr Buffer"
 Global Const $tagIOSTATUSBLOCK = "ptr Status;ptr Information"
 Global Const $FILE_WRITE_EA = 0x10
-;Global Const $FILE_NEED_EA = 0x80
-Global Const $FILE_NEED_EA = 0
+Global Const $FILE_NEED_EA = 0x00000080
+;Global Const $FILE_NEED_NO_EA = 0
 Global Const $MaxEaEntrySize = 65510
 Global Const $OBJ_CASE_INSENSITIVE = 0x00000040
 Global Const $FILE_RANDOM_ACCESS = 0x00000800
 Global Const $FILE_DIRECTORY_FILE = 0x00000002
 Global Const $FILE_NON_DIRECTORY_FILE = 0x00000040
-Global $nBytes, $buffer, $TargetPayload, $RunMode, $TextIdentifier, $TargetIsDirectory, $TargetContainerPath, $SearchFilter, $RecursiveMode, $AccessAttempts=1, $TargetContainerParentPath
+Global $nBytes, $buffer, $TargetPayload, $RunMode, $TextIdentifier, $TargetIsDirectory, $TargetContainerPath, $SearchFilter, $RecursiveMode, $AccessAttempts=1, $TargetContainerParentPath, $EaFlag
 
-ConsoleWrite("EaInject v1.0.0.0" & @CRLF & @CRLF)
+ConsoleWrite("EaInject v1.0.0.1" & @CRLF & @CRLF)
 _ValidateInput()
 ConsoleWrite("TargetPayload: " & $TargetPayload & @CRLF)
 $hFile0 = _WinAPI_CreateFile("\\.\" & $TargetPayload,2,6,7)
@@ -109,7 +110,7 @@ If $RunMode = 0 Or $RunMode = 1 Then
 			_WinAPI_CloseHandle($hFile0)
 		EndIf
 		$NextEntryOffset = 0
-		$EaName = $TextIdentifier&"1"
+		$EaName = $TextIdentifier;&"1"
 		$EaNameLength = StringLen($EaName)
 		$EaValue = DllStructGetData($tBuffer,1)
 ;		ConsoleWrite(_HexEncode($EaValue) & @CRLF)
@@ -117,7 +118,7 @@ If $RunMode = 0 Or $RunMode = 1 Then
 		$tagFILE_FULL_EA_INFORMATION = "ulong NextEntryOffset;byte Flags[1];byte EaNameLength[1];ushort EaValueLength;char EaName["&$EaNameLength&"];byte dummy[1];byte EaValue["&$EaValueLength+1&"]" ;
 		$EaStruct = DllStructCreate($tagFILE_FULL_EA_INFORMATION)
 		DllStructSetData($EaStruct,"NextEntryOffset",$NextEntryOffset)
-		DllStructSetData($EaStruct,"Flags",$FILE_NEED_EA)
+		DllStructSetData($EaStruct,"Flags",$EaFlag)
 		DllStructSetData($EaStruct,"EaNameLength",$EaNameLength)
 		DllStructSetData($EaStruct,"EaValueLength",$EaValueLength+1)
 		DllStructSetData($EaStruct,"EaName",$EaName)
@@ -206,7 +207,7 @@ If $RunMode = 0 Or $RunMode = 1 Then
 			$tagFILE_FULL_EA_INFORMATION = "ulong NextEntryOffset;byte Flags[1];byte EaNameLength[1];ushort EaValueLength;char EaName["&$EaNameLength&"];byte dummy[1];byte EaValue["&$EaValueLength+1&"]" ;
 			$EaStruct = DllStructCreate($tagFILE_FULL_EA_INFORMATION)
 			DllStructSetData($EaStruct,"NextEntryOffset",$NextEntryOffset)
-			DllStructSetData($EaStruct,"Flags",$FILE_NEED_EA)
+			DllStructSetData($EaStruct,"Flags",$EaFlag)
 			DllStructSetData($EaStruct,"EaNameLength",$EaNameLength)
 			DllStructSetData($EaStruct,"EaValueLength",$EaValueLength+1)
 			DllStructSetData($EaStruct,"EaName",$EaName)
@@ -264,7 +265,7 @@ ElseIf $RunMode = 2 Then
 		$tagFILE_FULL_EA_INFORMATION = "ulong NextEntryOffset;byte Flags[1];byte EaNameLength[1];ushort EaValueLength;char EaName["&$EaNameLength&"];byte dummy[1];byte EaValue["&$EaValueLength+1&"]" ;
 		$EaStruct = DllStructCreate($tagFILE_FULL_EA_INFORMATION)
 		DllStructSetData($EaStruct,"NextEntryOffset",$NextEntryOffset)
-		DllStructSetData($EaStruct,"Flags",$FILE_NEED_EA)
+		DllStructSetData($EaStruct,"Flags",$EaFlag)
 		DllStructSetData($EaStruct,"EaNameLength",$EaNameLength)
 		DllStructSetData($EaStruct,"EaValueLength",$EaValueLength+1)
 		DllStructSetData($EaStruct,"EaName",$EaName)
@@ -322,7 +323,7 @@ ElseIf $RunMode = 2 Then
 			$tagFILE_FULL_EA_INFORMATION = "ulong NextEntryOffset;byte Flags[1];byte EaNameLength[1];ushort EaValueLength;char EaName["&$EaNameLength&"];byte dummy[1];byte EaValue["&$EaValueLength+1&"]" ;
 			$EaStruct = DllStructCreate($tagFILE_FULL_EA_INFORMATION)
 			DllStructSetData($EaStruct,"NextEntryOffset",$NextEntryOffset)
-			DllStructSetData($EaStruct,"Flags",$FILE_NEED_EA)
+			DllStructSetData($EaStruct,"Flags",$EaFlag)
 			DllStructSetData($EaStruct,"EaNameLength",$EaNameLength)
 			DllStructSetData($EaStruct,"EaValueLength",$EaValueLength+1)
 			DllStructSetData($EaStruct,"EaName",$EaName)
@@ -454,16 +455,17 @@ EndFunc
 
 Func _ValidateInput()
 	Local $TargetAttributes
-	Global $TargetPayload, $RunMode, $TextIdentifier, $TargetIsDirectory, $TargetContainerPath, $SearchFilter, $RecursiveMode
+	Global $TargetPayload, $RunMode, $TextIdentifier, $EaFlag, $TargetIsDirectory, $TargetContainerPath, $SearchFilter, $RecursiveMode
 	If $cmdline[0] < 4 Then
 		ConsoleWrite("Error: Wrong number of parameters" & @CRLF)
 		ConsoleWrite("Syntax is:" & @CRLF)
-		ConsoleWrite("EaInject.exe /Payload:TargetPayload /Container:TargetContainer /Mode:{1|2} /Identifier:SomeText /Filter:Text /Recurse:boolean" & @CRLF)
+		ConsoleWrite("EaInject.exe /Payload:TargetPayload /Container:TargetContainer /Mode:{0|1|2} /Identifier:SomeText /Filter:Text /Recurse:boolean" & @CRLF)
 		ConsoleWrite("	/Payload is the file with the data to hide" & @CRLF)
 		ConsoleWrite("	/Container is the file or path to hide the payload in" & @CRLF)
 		ConsoleWrite("	/Mode 0 uses 1 existing file. Mode 1 will search existing files. Mode 2 will create new files in path specified in Container" & @CRLF)
 		ConsoleWrite("	/Identifier is some text to use for EA names." & @CRLF)
-		ConsoleWrite("	/Filter is for included results. Multiple filters separatet by ';'. Default is '*'." & @CRLF)
+		ConsoleWrite("	/EaFlag is boolean 0 or 1. Default is 0. A value of 1 triggers setting FILE_NEED_EA flag (0x80) which means target file cannot be interpreted without understanding the associated extended attributes. Default is zero which means ignore." & @CRLF)
+		ConsoleWrite("	/Filter is for included results in search. Multiple filters separatet by ';'. Default is '*'." & @CRLF)
 		ConsoleWrite("	/Recurse is a boolean value 0 or 1 for acivating/deactivating recursive mode." & @CRLF)
 		Exit
 	EndIf
@@ -472,6 +474,7 @@ Func _ValidateInput()
 		If StringLeft($cmdline[$i],11) = "/Container:" Then $TargetContainerPath = StringMid($cmdline[$i],12)
 		If StringLeft($cmdline[$i],6) = "/Mode:" Then $RunMode = StringMid($cmdline[$i],7)
 		If StringLeft($cmdline[$i],12) = "/Identifier:" Then $TextIdentifier = StringMid($cmdline[$i],13)
+		If StringLeft($cmdline[$i],8) = "/EaFlag:" Then $EaFlag = StringMid($cmdline[$i],9)
 		If StringLeft($cmdline[$i],8) = "/Filter:" Then $SearchFilter = StringMid($cmdline[$i],9)
 		If StringLeft($cmdline[$i],9) = "/Recurse:" Then $RecursiveMode = StringMid($cmdline[$i],10)
 	Next
@@ -520,6 +523,17 @@ Func _ValidateInput()
 		$RecursiveMode = 0
 	EndIf
 	If $SearchFilter = "" Then $SearchFilter = "*"
+	If $EaFlag = "" Then
+		$EaFlag = 0
+	Else
+		If $EaFlag <> 0 And $EaFlag <> 1 Then
+			ConsoleWrite("Error: EaFlag is boolean and can only be 0 or 1." & @CRLF)
+			Exit
+		EndIf
+		If $EaFlag = 1 Then
+			$EaFlag = $FILE_NEED_EA
+		EndIf
+	EndIf
 EndFunc
 
 Func _GrantFileAccess($exe)

@@ -1,0 +1,9 @@
+
+v1.0.0.1
+Added option to specify Flags param to fill in FILE_FULL_EA_INFORMATION struct in EaInject.
+Removed the appended "1" on the name for single file/entry injection.
+Fixed bug in EaQuery that caused all extracted data to have a null byte prepended. 
+Fixed errors in syntax help of both programs.
+
+v1.0.0.0 
+Initial version.
